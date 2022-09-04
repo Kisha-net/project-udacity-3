@@ -169,28 +169,28 @@ jobs:
       # Here's where you will add some code to rollback on failure   
       # - destroy-environment
       # work on configure infrastructure
-  configure-infrastructure:
-    docker:
-      - image: python:3.10-alpine3.16
-    steps:
-      # Checkout code from git
-      - checkout
-      - aws-cli/setup
-      # Add ssh keys with fingerprint
-      - add_ssh_keys:
-          fingerprints: ["4b:ab:85:48:fc:0e:f0:c8:69:ce:0c:4f:e0:49:4c:5f"]
-      # attach workspace
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update ansible \
-      - run:
-          name: Configure server
-          command: |
-            cd .circleci/ansible
-            ansible-playbook -i inventory.txt configure-server.yml
+  # configure-infrastructure:
+  #   docker:
+  #     - image: python:3.10-alpine3.16
+  #   steps:
+  #     # Checkout code from git
+  #     - checkout
+  #     - aws-cli/setup
+  #     # Add ssh keys with fingerprint
+  #     - add_ssh_keys:
+  #         fingerprints: ["4b:ab:85:48:fc:0e:f0:c8:69:ce:0c:4f:e0:49:4c:5f"]
+  #     # attach workspace
+  #     - attach_workspace:
+  #         at: ~/
+  #     - run:
+  #         name: Install dependencies
+  #         command: |
+  #           apk add --update ansible \
+  #     - run:
+  #         name: Configure server
+  #         command: |
+  #           cd .circleci/ansible
+  #           ansible-playbook -i inventory.txt configure-server.yml
       # - destroy-environment
 #  run-migrations:
     # docker:
