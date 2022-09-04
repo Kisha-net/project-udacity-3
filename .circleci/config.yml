@@ -104,15 +104,18 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [frontend-build]
+          keys: [scanfrontend-test]
       # Your job code here
       - run:
           name: Scan Frontend
           command: |
             cd frontend
             npm install
-            npm audit fix --audit-level=critical --force
+            # npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+        -save-cache:
+            paths: [frontend/node_modules]
+            key: scanfrontend-test
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -121,7 +124,7 @@ jobs:
       - checkout
       # Restore from cache
       - restore_cache:
-          keys: [backend-build]
+          keys: [scanbackend-build]
       # Your job code here  
       - run:
           name: Scan Backend
@@ -129,65 +132,95 @@ jobs:
             cd backend
             npm install
             npm audit fix --audit-level=critical --force
-  deploy-infrastructure:
+        -save-cache:
+            paths: [backend/node_modules]
+            key: scanbackend-test
+#   deploy-infrastructure:
+#     docker:
+#       - image: amazon/aws-cli 
+#     steps:
+#       - checkout
+#       - run: yum install -y tar gzip
+#       - run:
+#           name: Ensure back-end infrastructure exists
+#           command: |
+#             aws cloudformation deploy \
+#             --template-file .circleci/files/backend.yml \
+#             --tags project=udapeople \
+#             --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+#             --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
+#       - run:
+#           name: Ensure front-end infrastructure exist
+#           command: |
+#             aws cloudformation deploy \
+#             --template-file .circleci/files/frontend.yml \
+#             --tags project=udapeople \
+#             --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+#             --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
+#       - run:
+#           name: Add back-end ip to ansible inventory
+#           command: |
+#             aws ec2 describe-instances \
+#             --query 'Reservations[*].Instances[*].PublicIpAddress' \
+#             --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+#             --output text >> .circleci/ansible/inventory.txt
+#             cat .circleci/ansible/inventory.txt
+#       - persist_to_workspace:
+#           root: ~/
+#           paths:
+#             - project/.circleci/ansible/inventory.txt
+#       # Here's where you will add some code to rollback on failure   
+#       - destroy-environment
+#   configure-infrastructure:
+#     docker:
+#       - image: python:3.10-alpine3.16
+#     steps:
+#       # Checkout code from git
+#       - checkout
+#       - aws-cli/setup
+#       # Add ssh keys with fingerprint
+#       - add_ssh_keys:
+#           fingerprints: ["4b:ab:85:48:fc:0e:f0:c8:69:ce:0c:4f:e0:49:4c:5f"]
+#       # attach workspace
+#       - attach_workspace:
+#           at: ~/
+#       - run:
+#           name: Install dependencies
+#           command: |
+#             apk add --update ansible \
+#       - run:
+#           name: Configure server
+#           command: |
+#             cd .circleci/ansible
+#             ansible-playbook -i inventory.txt configure-server.yml
+#       - destroy-environment
+#  run-migrations:
     docker:
-      - image: amazon/aws-cli 
-    steps:
-      - checkout
-      - run: yum install -y tar gzip
-      - run:
-          name: Ensure back-end infrastructure exists
-          command: |
-            aws cloudformation deploy \
-            --template-file .circleci/files/backend.yml \
-            --tags project=udapeople \
-            --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
-      - run:
-          name: Ensure front-end infrastructure exist
-          command: |
-            aws cloudformation deploy \
-            --template-file .circleci/files/frontend.yml \
-            --tags project=udapeople \
-            --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            aws ec2 describe-instances \
-            --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --output text >> .circleci/ansible/inventory.txt
-            cat .circleci/ansible/inventory.txt
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure   
-      - destroy-environment
-  configure-infrastructure:
-    docker:
-      - image: python:3.10-alpine3.16
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - aws-cli/setup
-      # Add ssh keys with fingerprint
-      - add_ssh_keys:
-          fingerprints: ["4b:ab:85:48:fc:0e:f0:c8:69:ce:0c:4f:e0:49:4c:5f"]
-      # attach workspace
-      - attach_workspace:
-          at: ~/
       - run:
-          name: Install dependencies
+          name: Run migrations
           command: |
-            apk add --update ansible \
+            cd backend
+            npm install
+            npm run migrations > migrations_dump.txt
+            cat migrations_dump.txt
       - run:
-          name: Configure server
+          name: Send migration results to kvdb.io
           command: |
-            cd .circleci/ansible
-            ansible-playbook -i inventory.txt configure-server.yml
+            ls ~/project/.circleci
+            ls ~/project/backend
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            then
+                curl -k https://kvdb.io/U36CT66k33kaEwRopovCZC/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+            fi
       - destroy-environment
+      - revert-migrations
 workflows:
   project-workflow:
     jobs:
@@ -201,7 +234,7 @@ workflows:
           requires: [test-frontend]
       - scan-backend:
           requires: [test-backend]
-      - deploy-infrastructure:
+      # - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
