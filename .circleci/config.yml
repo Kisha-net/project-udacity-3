@@ -34,19 +34,20 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      # Add parameter here 
+      # Add parameter here   
       workflow_id:
         default: "${CIRCLE_WORKFLOW_ID:0:7}"
         type: string
+
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
             # Your code here
-            # aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
-            # aws cloudformation delete-stack --stack-name "udapeople-backend-<<parameters.workflow_id>>"
-            # aws cloudformation delete-stack --stack-name "udapeople-frontend-<<parameters.workflow_id>>"
+            aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
+            aws cloudformation delete-stack --stack-name "udapeople-backend-<<parameters.workflow_id>>"
+            aws cloudformation delete-stack --stack-name "udapeople-frontend-<<parameters.workflow_id>>"
             
 
   revert-migrations:
@@ -396,7 +397,7 @@ jobs:
             list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
             --no-paginate --output text)
             echo "Old Wokflow ID: $OLD_WORKFLOW_ID"
-            curl https://kvdb.io/33GxcCpH7rHocPuWALvF32/old_workflow_id -d "${OLD_WORKFLOW_ID}"
+            curl https://kvdb.io/94ueWDETtR6PxhF8VKBDDc/old_workflow_id -d "${OLD_WORKFLOW_ID}"
       - run:
           name: Update cloudfront distribution
           command: |
@@ -406,6 +407,32 @@ jobs:
             --stack-name InitialStack
       - destroy-environment
       - revert-migrations
+  cleanup:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - install_awscli
+      - run:
+          name: Get old stack workflow id
+          command: |
+            export STACKS=($(aws cloudformation list-stacks \
+                --query "StackSummaries[*].StackName" \
+                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo Stack names: "${STACKS[@]}"
+            export OldWorkflowID=$(curl --insecure https://kvdb.io/94ueWDETtR6PxhF8VKBDDc/old_workflow_id)
+            echo Old Workflow ID: $OldWorkflowID
+      - run:
+          name: Remove old stacks and files
+          command: |
+            export OldWorkflowID=$(curl --insecure https://kvdb.io/94ueWDETtR6PxhF8VKBDDc/old_workflow_id)
+            echo Old Workflow ID: $OldWorkflowID 
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            fi
 
 workflows:
   project-workflow:
@@ -437,6 +464,6 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
+      - cleanup:
+          requires: [cloudfront-update]
    
