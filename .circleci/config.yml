@@ -132,12 +132,12 @@ jobs:
 
   deploy-infrastructure:
     docker:
-    - image: amazon/aws-cli 
+      - image: amazon/aws-cli 
     steps:
       - checkout
       - run: 
           name: Install dependacies
-          command: 
+          command: |
            yum install -y tar gzip
       - run:
           name: Ensure back-end infrastructure exists
