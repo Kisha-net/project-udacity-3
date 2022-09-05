@@ -269,7 +269,7 @@ jobs:
             then
                 curl -k https://kvdb.io/94ueWDETtR6PxhF8VKBDDc/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
-      - destroy-environment
+      # - destroy-environment
       - revert-migrations
 
   deploy-frontend:
@@ -309,7 +309,7 @@ jobs:
             npm install
             npm run build
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      - destroy-environment
+      # - destroy-environment
       - revert-migrations
 
      
@@ -323,7 +323,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: 
-            - "4b:ab:85:48:fc:0e:f0:c8:69:ce:0c:4f:e0:49:4c:5f"
+            - "a4:9d:96:eb:ac:e1:aa:05:fb:97:f2:1d:e8:2c:0e:9c"
       - attach_workspace:
           at: ~/
       - install_nodejs
@@ -345,7 +345,7 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment
+      # - destroy-environment
       - revert-migrations
  
 workflows:
