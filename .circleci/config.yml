@@ -95,7 +95,6 @@ jobs:
             cd backend
             npm install
             npm run test
-
   scan-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -113,7 +112,6 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
-
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -130,8 +128,6 @@ jobs:
             cd backend
             npm install
             npm audit fix --audit-level=critical --force
-
-
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli 
@@ -164,7 +160,7 @@ jobs:
           name: Add back-end ip to ansible inventory
           command: |
             cd .circleci/ansible
-            ansible-playbook -i invventory.txt configure-server.yml
+            # ansible-playbook -i invventory.txt configure-server.yml
             cat inventory.txt
             aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
@@ -175,7 +171,7 @@ jobs:
             --filter Name-tag:Name,Values-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --output text 
             )
-            
+
       - persist_to_workspace:
           root: ~/
           paths:
