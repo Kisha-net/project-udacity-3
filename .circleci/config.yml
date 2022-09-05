@@ -1,16 +1,23 @@
 version: 2.1
 
 commands:
-  destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    parameters:
-      # Add parameter here   
-    steps:
-      - run:
-          name: Destroy environments
-          when: on_fail
-          command: |
-            # Your code here
+  # destroy-environment:
+  #   description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+  #   parameters:
+  #     # Add parameter here 
+  #     Workflow_ID:
+  #       type: string
+  #       default: ${CIRCLE_WORKFLOW_ID:0:7}  
+  #   steps:
+  #     - run:
+  #         name: Destroy environments
+  #         when: on_fail
+  #         command: |
+  #           # Your code here
+  #           aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
+  #           aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>
+  #           aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
+
             exit 1
 
   revert-migrations:
@@ -161,13 +168,19 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            cd .circleci/ansible
-            # ansible-playbook -i invventory.txt configure-server.yml
-            cat inventory.txt
             aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --output text --filter Name-tag:Name,Values-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --output text >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
+
+            # cd .circleci/ansible
+            # # ansible-playbook -i invventory.txt configure-server.yml
+            # cat inventory.txt
+            # aws ec2 describe-instances \
+            # --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            # --output text --filter Name-tag:Name,Values-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            # cat .circleci/ansible/inventory.txt
           
 
       - persist_to_workspace:
