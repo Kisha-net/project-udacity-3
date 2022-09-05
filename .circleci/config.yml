@@ -31,15 +31,7 @@ commands:
             #  Add revert code here. You can find this in the Getting Started section.
               exit 1
             fi
-  install_awscli:
-    description: Install AWS CLI v2
-    steps:
-      - run:
-          name: Install AWS CLI v2
-          command: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
+
             
 jobs:
   build-frontend:
@@ -140,10 +132,9 @@ jobs:
 
   deploy-infrastructure:
     docker:
-      - image: cimg/python:3.10 
+    - image: amazon/aws-cli 
     steps:
       - checkout
-      - install_awscli
       - run: 
           name: Install dependacies
           command: 
