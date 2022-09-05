@@ -383,7 +383,7 @@ jobs:
   #             fi
   #     - destroy-environment
   #     - revert-migrations
-    smoke-test:
+  smoke-test:
     docker:
       - image: python:3.10-alpine3.16
     steps:
@@ -438,7 +438,6 @@ jobs:
       # Here's where you will add some code to rollback on failure  
       - destroy-environment
       - revert-migrations
-
 
 
   cloudfront-update:
