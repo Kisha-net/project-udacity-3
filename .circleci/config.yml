@@ -130,9 +130,10 @@ jobs:
             npm audit fix --audit-level=critical --force
   deploy-infrastructure:
     docker:
-      - image: amazon/aws-cli 
+      - image: cimg/base:stable 
     steps:
       - checkout
+      - install_awscli
       - run: 
           name: Install dependacies
           command: 
