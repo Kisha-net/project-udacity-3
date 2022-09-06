@@ -327,7 +327,7 @@ jobs:
       - install_awscli
       - install_ansible
       - run:
-        name: Deploy backend
+          name: Deploy backend
           command: |
             cd backend
             npm i
