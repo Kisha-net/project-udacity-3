@@ -4,19 +4,23 @@
   file:
     path: ~/backend-app
     state: directory
+
 - name: "Unarchive backend files"
   unarchive:
     src: artifact.tar.gz
     dest: ~/backend-app
+
 - name: "Installing Node Dependencies"
   shell: |
     cd ~/backend-app
     npm i
+
 - name: start app
   become: true
   shell: |
     sudo pm2 stop default
     sudo pm2 start npm -- run start
+
 - name: "Executing Node app with PM2"
   shell: |
     cd ~/backend-app/dist
@@ -30,7 +34,84 @@
 - name: print message
   debug:
     msg: "{{ execute_node.stdout_lines }}"
+    
 - name: "Configure pm2 to start as a service"
   become: true
   shell: |
     env PATH=$PATH:/usr/local/bin pm2 startup systemd -u ubuntu --hp /home/ubuntu
+
+# ---
+
+# - name: "Create directory for Server"
+#   file:
+#     path: ~/server
+#     state: directory
+
+# - name: "Extract files"
+#   become: true
+#   unarchive:
+#     src: ~/project/artifact.tar.gz
+#     dest: ~/server
+
+
+# - name: "install dependencies."
+#   become: true
+#   apt:
+#     name: ["nodejs", "npm"]
+#     state: latest
+#     update_cache: yes
+
+# - name: "install pm2"
+#   become: true
+#   npm:
+#     name: pm2
+#     global: yes
+#     production: yes
+#     state: present
+
+# - name: "Install dependencies 2"
+#   shell: |
+#     cd ~/server
+#     npm i
+
+# - name: "Run Server"
+#   shell: |
+#     cd ~/server
+#     pm2 stop default
+#     pm2 start npm -- start
+
+# ---
+# - name: 'update and upgrade packages.'
+#   become: true
+#   apt:
+#     upgrade: yes
+#     update_cache: yes
+#     cache_valid_time: 86400
+# - name: remove unneeded deps
+#   become: true
+#   apt:
+#     autoremove: yes
+# - name: install deps
+#   become: true
+#   apt:
+#     name: ['nodejs', 'npm']
+#     state: latest
+#     update_cache: yes
+# - name: install pm2
+#   become: true
+#   npm:
+#     name: pm2
+#     global: yes
+#     state: latest
+#     production: yes
+# - name: extract artifact
+#   become: true
+#   unarchive:
+#     src: files/artifact.tar.gz
+#     dest: .
+
+# - name: start app
+#   become: true
+#   shell: |
+#     pm2 delete all
+#     pm2 start npm -- start
