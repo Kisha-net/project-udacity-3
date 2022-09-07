@@ -23,12 +23,12 @@
       raw: test -e /usr/bin/python3 || (apt -y update && apt install -y python3)
       changed_when: false
 
-    # - name: "install python for Ansible."
-    #   become: yes
-    #   apt:
-    #     name: "python3-pip"
-    #     update_cache: yes
-    #     state: latest
+    - name: "install python for Ansible."
+      become: yes
+      apt:
+        name: "python3-pip"
+        update_cache: yes
+        state: latest
 
 
   # Get the environment variables from CircleCI and add to the EC2 instance
