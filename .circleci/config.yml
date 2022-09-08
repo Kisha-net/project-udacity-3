@@ -428,15 +428,24 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
-            export OldWorkflowID=$(curl --insecure https://kvdb.io/94ueWDETtR6PxhF8VKBDDc/old_workflow_id)
+            export STACKS=($(aws cloudformation list-stacks \
+                --query "StackSummaries[*].StackName" \
+                --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo Stack names: "${STACKS[@]}"
+            
+            export OldWorkflowID=$(curl --insecure https://kvdb.io/7agPhis6KiUx1Nj7wteLPs/old_workflow_id)
             echo Old Workflow ID: $OldWorkflowID 
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
             then
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              echo "--------------- Deleting stacks and bucket-------------------"
+              aws s3 rm "s3://${BucketID}" --recursive
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              echo "---------------- Delete confirmed-----------------------------"
+            else
+              echo "This features release is the latest and will not be deleted"
             fi
-
+      - destroy-environment
 workflows:
   project-workflow:
     jobs:
